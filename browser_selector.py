@@ -1,14 +1,20 @@
 #!/usr/bin/python
+"""
+Original creator: https://www.reddit.com/user/AiwendilH/
+https://www.reddit.com/r/linux/comments/2lgokr/looking_for_an_app_that_lets_you_choose_web/
 
-# Original creator: https://www.reddit.com/user/AiwendilH/
-# Taken from https://www.reddit.com/r/linux/comments/2lgokr/looking_for_an_app_that_lets_you_choose_web/
+Requires Python 3, pyqt5 and pyxdg. Original was Python 2, pyqt4 and pyxdg.
+I ported it to Python 3 and relevant dependencies.
 
-# Requires Python 3, pyqt5 and pyxdg. Original was Python 2, pyqt4 and pyxdg. I ported it to more current
-# versions of Python and the other dependencies.
+Now it is being ported to Wayland.
+"""
 
-browsers = ["/usr/share/applications/brave-browser.desktop", "/usr/share/applications/microsoft-edge.desktop", "/usr/share/applications/vivaldi-stable.desktop", "/usr/share/applications/google-chrome.desktop", "/usr/share/applications/microsoft-edge-dev.desktop", "/usr/share/applications/firefox.desktop"]
+browsers = ["/usr/share/applications/brave-browser.desktop", "/usr/share/applications/microsoft-edge.desktop",
+            "/usr/share/applications/vivaldi-stable.desktop", "/usr/share/applications/opera.desktop",
+            "/usr/share/applications/firefox.desktop"]
 iconSize = [48,48]
 
+import os
 import sys
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -16,7 +22,6 @@ from PyQt5 import QtWidgets
 from xdg import DesktopEntry
 from xdg import IconTheme
 from functools import partial
-import os
 
 class Selector(QtWidgets.QWidget):
     def __init__(self):
@@ -28,7 +33,7 @@ class Selector(QtWidgets.QWidget):
         # create the buttons for the browsers
         for browser in browsers:
             icon = QtGui.QIcon()
-            # get the icon from th desktop file
+            # get the icon from the desktop file
             icon.addPixmap(QtGui.QPixmap(IconTheme.getIconPath(DesktopEntry.DesktopEntry(browser).getIcon())))
             self.buttons += [QtWidgets.QPushButton("")]
             self.buttons[-1].setIcon(icon)
@@ -46,7 +51,7 @@ class Selector(QtWidgets.QWidget):
         #self.setWindowIcon(QtGui.QIcon('whatever.png'))
         # move the window to the cursor
         pos = QtGui.QCursor().pos()
-        self.move(pos.x()-(iconSize[0]/2), pos.y()-iconSize[1]/2)
+        self.move(pos.x()-(iconSize[0]//2), pos.y()-iconSize[1]//2)
         self.show()
     def buttonClicked(self, browser):
         #ugly, wrong...and hacky...but works for me and I am too lazy to do it right
