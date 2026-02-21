@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Browser Selector Icon</title>
+  <desc id="desc">Compass-inspired browser selector mark with segmented orbit and pointer.</desc>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A1E3B"/>
+      <stop offset="1" stop-color="#103A5D"/>
+    </linearGradient>
+    <linearGradient id="ringA" x1="120" y1="120" x2="392" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#37D5D6"/>
+      <stop offset="1" stop-color="#1FA2FF"/>
+    </linearGradient>
+    <linearGradient id="pointer" x1="208" y1="140" x2="332" y2="332" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFEE58"/>
+      <stop offset="1" stop-color="#FF8F00"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="448" height="448" rx="108" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <circle cx="256" cy="256" r="154" fill="none" stroke="#0D2A47" stroke-width="52"/>
+
+    <circle cx="256" cy="256" r="154" fill="none" stroke="url(#ringA)" stroke-width="38" stroke-linecap="round"
+            stroke-dasharray="186 42 96 42 68 42 122 42"/>
+
+    <circle cx="256" cy="256" r="98" fill="#E8F3FF" fill-opacity="0.08" stroke="#B9E4FF" stroke-opacity="0.35" stroke-width="4"/>
+
+    <path d="M256 150 L332 332 L256 292 L180 332 Z" fill="url(#pointer)" stroke="#5C3D00" stroke-opacity="0.35" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="256" cy="256" r="24" fill="#FFF4C2" stroke="#D39A00" stroke-width="5"/>
+  </g>
+</svg>

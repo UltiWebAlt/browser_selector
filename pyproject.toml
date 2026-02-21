@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "browser-selector"
+version = "0.1.0"
+description = "Show a chooser window to open URLs in a selected Linux browser."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "PyQt5>=5.15",
+  "pyxdg>=0.28",
+]
+
+[project.scripts]
+browser-selector = "browser_selector:main"
