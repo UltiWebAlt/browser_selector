@@ -8,12 +8,20 @@ DESKTOP_SRC="$SCRIPT_DIR/browser-selector.desktop"
 DESKTOP_OUT="$HOME/.local/share/applications/browser-selector.desktop"
 ICON_SRC="$PROJECT_ROOT/assets/png/alt/browser-selector-icon-alt-256.png"
 ICON_OUT="$HOME/.local/share/icons/hicolor/256x256/apps/browser-selector-icon-alt.png"
+LAUNCHER_PATH="${BROWSER_SELECTOR_LAUNCHER:-browser-selector}"
 
 mkdir -p "$(dirname "$DESKTOP_OUT")"
 mkdir -p "$(dirname "$ICON_OUT")"
+mkdir -p "$HOME/.config"
 
 cp "$ICON_SRC" "$ICON_OUT"
-cp "$DESKTOP_SRC" "$DESKTOP_OUT"
+
+# Keep the packaged entry usable for pipx installs, while allowing install.sh
+# to provide the absolute path to its installed launcher.
+if [[ "$LAUNCHER_PATH" == *[[:space:]]* ]]; then
+  LAUNCHER_PATH="\"${LAUNCHER_PATH//\\/\\\\}\""
+fi
+sed "s|^Exec=[^ ]*|Exec=$LAUNCHER_PATH|" "$DESKTOP_SRC" > "$DESKTOP_OUT"
 
 if command -v update-desktop-database >/dev/null 2>&1; then
   update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
@@ -31,7 +39,5 @@ Installed desktop launcher:
 Installed icon:
   ~/.local/share/icons/hicolor/256x256/apps/browser-selector-icon-alt.png
 
-If `browser-selector` is not in your PATH, either:
-1) Install with pipx (`pipx install .`), or
-2) Edit Exec= in the desktop file to an absolute path (for example, /path/to/repo/.venv/bin/browser-selector %U).
+The HTTP and HTTPS handlers now point to this installation.
 EOF

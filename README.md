@@ -26,11 +26,17 @@ Python dependencies are installed automatically by the install commands below.
 Run:
 
 ```bash
-./.venv/bin/browser-selector "https://example.com"
+~/.local/bin/browser-selector/.venv/bin/browser-selector "https://example.com"
 ```
 
-`install.sh` also installs the desktop launcher and icon automatically.
+`install.sh` copies the script and its virtual environment into
+`~/.local/bin/browser-selector/`. It also installs the desktop launcher and
+icon automatically.
 To skip that step: `SKIP_DESKTOP_SETUP=1 ./install.sh`
+The desktop entry points to the installed launcher, so the clone can be moved
+or removed after installation.
+To remove the desktop launcher and icon later, run
+`bash desktop/uninstall_desktop_entry.sh`.
 
 ## Alternative Install (recommended for end users)
 

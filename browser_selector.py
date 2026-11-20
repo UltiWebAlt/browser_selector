@@ -120,7 +120,20 @@ def build_exec_command(exec_template, urls):
         elif token.startswith("%"):
             continue
         else:
-            command.append(token)
+            # Although the desktop-entry specification requires URI field codes
+            # to be separate arguments, a number of third-party entries use
+            # forms such as ``--url=%u``.  Expand those too so selecting a
+            # browser never silently drops the link.
+            if "%u" in token:
+                saw_url_placeholder = True
+                if urls:
+                    command.append(token.replace("%u", urls[0]))
+            elif "%U" in token:
+                saw_url_placeholder = True
+                if urls:
+                    command.extend(token.replace("%U", url) for url in urls)
+            else:
+                command.append(token)
     if urls and not saw_url_placeholder:
         command.extend(urls)
     return command
@@ -137,35 +150,164 @@ def build_selector_class(QtCore, QtGui, QtWidgets, DesktopEntry, IconTheme):
             self.setupWindow()
 
         def setupWindow(self):
-            # create the buttons for the browsers
+            self.setObjectName("selectorWindow")
+            self.setWindowFlags(
+                QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint
+            )
+
+            button_width = max(84, self.icon_size[0] + 24)
+            button_height = max(72, self.icon_size[1] + 24)
+            window_width = max(
+                160, 32 + len(self.browser_entries) * button_width
+                + max(0, len(self.browser_entries) - 1) * 10,
+            )
+
+            outer = QtWidgets.QVBoxLayout(self)
+            outer.setContentsMargins(0, 0, 0, 0)
+            card = QtWidgets.QFrame()
+            card.setObjectName("chooserCard")
+            outer.addWidget(card)
+            layout = QtWidgets.QVBoxLayout(card)
+            layout.setContentsMargins(16, 12, 16, 8)
+            layout.setSpacing(0)
+
+            has_url = bool(sys.argv[1:])
+            if has_url:
+                heading = QtWidgets.QHBoxLayout()
+                heading.setSpacing(8)
+                globe = QtWidgets.QLabel()
+                globe.setPixmap(self.globePixmap())
+                globe.setFixedSize(16, 16)
+                heading.addWidget(globe)
+                title = QtWidgets.QLabel("Open link with")
+                title.setObjectName("chooserTitle")
+                heading.addWidget(title)
+                heading.addStretch()
+                layout.addLayout(heading)
+                layout.addSpacing(10)
+
+                url_box = QtWidgets.QFrame()
+                url_box.setObjectName("urlBox")
+                url_box.setFixedHeight(32)
+                url_layout = QtWidgets.QHBoxLayout(url_box)
+                url_layout.setContentsMargins(9, 0, 8, 0)
+                url_layout.setSpacing(6)
+                url = sys.argv[1]
+                url_label = QtWidgets.QLabel()
+                url_label.setObjectName("urlLabel")
+                url_label.setSizePolicy(
+                    QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred
+                )
+                url_label.setToolTip(url)
+                url_font = url_label.font()
+                url_font.setPixelSize(12)
+                url_font.setUnderline(True)
+                url_label.setFont(url_font)
+                url_label.setText(
+                    url_label.fontMetrics().elidedText(
+                        url, QtCore.Qt.ElideRight, window_width - 76
+                    )
+                )
+                url_layout.addWidget(url_label, 1)
+                arrow = QtWidgets.QLabel("↗")
+                arrow.setObjectName("urlArrow")
+                url_layout.addWidget(arrow)
+                layout.addWidget(url_box)
+                layout.addSpacing(8)
+
+            browsers = QtWidgets.QHBoxLayout()
+            browsers.setSpacing(10)
+            browsers.addStretch()
             for browser in self.browser_entries:
+                entry = DesktopEntry.DesktopEntry(browser)
                 icon = QtGui.QIcon()
-                # get the icon from the desktop file
-                icon_path = IconTheme.getIconPath(DesktopEntry.DesktopEntry(browser).getIcon())
+                icon_path = IconTheme.getIconPath(entry.getIcon())
                 if icon_path:
                     icon.addPixmap(QtGui.QPixmap(icon_path))
-                self.buttons += [QtWidgets.QPushButton("")]
-                self.buttons[-1].setIcon(icon)
-                self.buttons[-1].setIconSize(QtCore.QSize(self.icon_size[0], self.icon_size[1]))
-                self.buttons[-1].clicked.connect(partial(self.buttonClicked, browser))
-                # set the tooltip to the comment of the desktop entry
-                self.buttons[-1].setToolTip(DesktopEntry.DesktopEntry(browser).getComment())
-            # and the layout
-            hbox = QtWidgets.QHBoxLayout()
-            for button in self.buttons:
-                hbox.addWidget(button)
-            self.setLayout(hbox)
+                name = entry.getName()
+                for suffix in (" Web Browser", " Browser"):
+                    if name.endswith(suffix):
+                        name = name[: -len(suffix)]
+                        break
+                if name in ("Google Chrome", "Microsoft Edge"):
+                    name = name.split(" ", 1)[1]
+                button = QtWidgets.QToolButton()
+                button_font = button.font()
+                button_font.setPixelSize(12)
+                button.setFont(button_font)
+                button.setText(
+                    button.fontMetrics().elidedText(
+                        name, QtCore.Qt.ElideRight, button_width - 8
+                    )
+                )
+                button.setIcon(icon)
+                button.setIconSize(QtCore.QSize(*self.icon_size))
+                button.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+                button.setFixedSize(button_width, button_height)
+                button.clicked.connect(partial(self.buttonClicked, browser))
+                button.setToolTip(entry.getComment() or entry.getName())
+                button.setAccessibleName(entry.getName())
+                self.buttons.append(button)
+                browsers.addWidget(button)
+            browsers.addStretch()
+            layout.addLayout(browsers)
+
+            self.setStyleSheet("""
+                QWidget#selectorWindow { background: #1c1c1c; }
+                QFrame#chooserCard {
+                    background: #1c1c1c;
+                    border: 1px solid #303030;
+                    border-radius: 17px;
+                }
+                QLabel { color: #f4f4f4; }
+                QLabel#chooserTitle { font-size: 13px; font-weight: 600; }
+                QFrame#urlBox { background: #151515; border-radius: 8px; }
+                QLabel#urlLabel { font-size: 12px; }
+                QLabel#urlArrow { color: #a4a4a4; font-size: 12px; }
+                QToolButton {
+                    background: transparent;
+                    color: #f4f4f4;
+                    border: 0;
+                    border-radius: 9px;
+                    font-size: 12px;
+                    padding: 0;
+                }
+                QToolButton:hover, QToolButton:focus { background: #303030; }
+                QToolButton:pressed { background: #3c3c3c; }
+            """)
             self.setWindowTitle("Browser Selector")
             if self.missing_paths:
                 self.setToolTip(
                     "Ignored missing browser entries:\n" + "\n".join(self.missing_paths)
                 )
-            # in case someone dislikes the default X icon...just set whatever icon you want here
-            #self.setWindowIcon(QtGui.QIcon('whatever.png'))
-            # move the window to the cursor
+
+            url_section_height = 20 + 10 + 32 + 8 if has_url else 0
+            self.setFixedSize(window_width, 12 + url_section_height + button_height + 8)
             pos = QtGui.QCursor().pos()
-            self.move(pos.x() - (self.icon_size[0] // 2), pos.y() - self.icon_size[1] // 2)
+            screen = QtGui.QGuiApplication.screenAt(pos) or QtWidgets.QApplication.primaryScreen()
+            bounds = screen.availableGeometry()
+            x = max(bounds.left(), min(pos.x() - window_width // 2, bounds.right() - window_width + 1))
+            y = max(bounds.top(), min(pos.y() - self.height() // 2, bounds.bottom() - self.height() + 1))
+            self.move(x, y)
             self.show()
+
+        def keyPressEvent(self, event):
+            if event.key() == QtCore.Qt.Key_Escape:
+                self.close()
+                return
+            super().keyPressEvent(event)
+
+        def globePixmap(self):
+            pixmap = QtGui.QPixmap(16, 16)
+            pixmap.fill(QtCore.Qt.transparent)
+            painter = QtGui.QPainter(pixmap)
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            painter.setPen(QtGui.QPen(QtGui.QColor("#a4a4a4"), 1.2))
+            painter.drawEllipse(QtCore.QRectF(1.5, 1.5, 13, 13))
+            painter.drawEllipse(QtCore.QRectF(5, 1.5, 6, 13))
+            painter.drawLine(QtCore.QPointF(1.5, 8), QtCore.QPointF(14.5, 8))
+            painter.end()
+            return pixmap
 
         def buttonClicked(self, browser):
             urls = sys.argv[1:]
