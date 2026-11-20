@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Browser Selector
+Comment=Choose which browser to open links with
+Exec=browser-selector %u
+Icon=browser-selector-icon-alt
+Terminal=false
+Categories=Network;WebBrowser;Utility;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;
